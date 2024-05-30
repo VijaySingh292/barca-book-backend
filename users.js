@@ -10,6 +10,10 @@ const router = Router();
 
 const db = new Client({
   connectionString: process.env.POSTGRES_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+  
 });
 
 db.connect()
