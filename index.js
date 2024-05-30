@@ -58,7 +58,6 @@ db.connect()
     process.exit(1);
   });
 
-// Get all posts
 app.get('/post', async (req, res, next) => {
   try {
     const result = await db.query('SELECT * FROM posts');
@@ -69,7 +68,6 @@ app.get('/post', async (req, res, next) => {
   }
 });
 
-// Get post by ID with comments
 app.get('/byId/:id', async (req, res, next) => {
   const { id } = req.params;
   try {
@@ -85,11 +83,10 @@ app.get('/byId/:id', async (req, res, next) => {
   }
 });
 
-// Create a new post
 app.post('/', validateToken, async (req, res, next) => {
   const { title, post_text } = req.body;
-  const user_name = req.user.email; // Assuming username is available in req.user
-  const user_id = req.user.id; // Assuming user ID is available in req.user
+  const user_name = req.user.email; 
+  const user_id = req.user.id; 
 
   if (!title || !post_text || !user_name || !user_id) {
     return res.status(400).send('Missing required fields');
@@ -109,29 +106,24 @@ app.post('/', validateToken, async (req, res, next) => {
   }
 });
 
-// Delete a post by ID
 app.delete('/post/:postId', validateToken, async (req, res, next) => {
   const { postId } = req.params;
 
   try {
-    // Check if the post exists
     const postQuery = 'SELECT * FROM posts WHERE id_num = $1';
     const postResult = await db.query(postQuery, [postId]);
     if (postResult.rows.length === 0) {
       return res.status(404).json({ error: 'Post not found' });
     }
 
-    // Check if the authenticated user is the author of the post
     const post = postResult.rows[0];
     if (post.user_name !== req.user.email) {
       return res.status(403).json({ error: 'You are not authorized to delete this post' });
     }
 
-    // Delete the post from the database
     const deleteQuery = 'DELETE FROM posts WHERE id_num = $1 RETURNING *';
     const deleteResult = await db.query(deleteQuery, [postId]);
 
-    // Check if the post was deleted successfully
     if (deleteResult.rowCount === 0) {
       return res.status(500).json({ error: 'Failed to delete post' });
     }
@@ -143,10 +135,9 @@ app.delete('/post/:postId', validateToken, async (req, res, next) => {
   }
 });
 
-// Add a comment to a post
 app.post('/comment', validateToken, async (req, res, next) => {
   const { post_id, comment_text } = req.body;
-  const username = req.user.email; // Assuming username is available in req.user
+  const username = req.user.email; 
 
   if (!post_id || !comment_text) {
     return res.status(400).send('Missing required fields');
@@ -166,7 +157,6 @@ app.post('/comment', validateToken, async (req, res, next) => {
   }
 });
 
-// Delete a comment by ID
 app.delete('/comment/:commentId', validateToken, async (req, res, next) => {
   const { commentId } = req.params;
 
@@ -185,15 +175,12 @@ app.delete('/comment/:commentId', validateToken, async (req, res, next) => {
   }
 });
 
-// Use the user and like routers
 app.use('/api', userRouter);
 app.use('/api', likeRouter);
 
-// Error handling middleware
 
 app.get('/byUserId/:id', async (req, res, next) => {
   const { id } = req.params;
-    // Fetch all posts made by the user by joining the posts and new_users tables
     const postsResult = await db.query(
       'SELECT p.* FROM posts p WHERE p.user_id = $1',
       [id]
@@ -203,7 +190,6 @@ app.get('/byUserId/:id', async (req, res, next) => {
       return res.status(404).send('No posts found for this user');
     }
 
-    // Fetch comments for each post
     const postsWithComments = await Promise.all(postsResult.rows.map(async (post) => {
       const commentsResult = await db.query('SELECT * FROM comments WHERE post_id = $1', [post.id_num]);
       return {
@@ -217,7 +203,6 @@ app.get('/byUserId/:id', async (req, res, next) => {
   }
 );
 
-// Get basic user information by ID
 app.get('/basicinfo/:id', async (req, res) => {
   const id = req.params.id;
 
@@ -239,7 +224,6 @@ app.use((err, req, res, next) => {
 });
 
 
-// Update post title
 app.put('/posts/title', validateToken, async (req, res, next) => {
   const { newtitle, id } = req.body;
 
@@ -262,7 +246,6 @@ app.put('/posts/title', validateToken, async (req, res, next) => {
   }
 });
 
-// Update post text
 app.put('/posts/text', validateToken, async (req, res, next) => {
   const { newtext, id } = req.body;
 
@@ -290,7 +273,6 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');
 });
 
-// Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM signal received: closing HTTP server');
   server.close(() => {
@@ -306,7 +288,7 @@ process.on('SIGTERM', () => {
 });
 
 
-const PORT = process.env.DB_PORT || 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
